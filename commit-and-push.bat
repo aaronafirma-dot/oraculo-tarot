@@ -1,6 +1,7 @@
 @echo off
 REM ============================================================
-REM  Hace commit del cambio de auth (popup -> redirect) y sube a GitHub.
+REM  Hace commit de los cambios pendientes y sube a GitHub.
+REM  Mensaje: 3 consultas gratis, paquete de 3 pagas, fix conteo.
 REM ============================================================
 
 cd /d "%~dp0"
@@ -15,7 +16,7 @@ git add -A
 
 echo.
 echo == Creando commit...
-git commit -m "fix(auth): switch Google sign-in from popup to redirect to avoid COOP issues"
+git commit -m "feat(consultas): 3 gratis + paquete de 3 pagas; fix doble conteo por lectura"
 if errorlevel 1 (
     echo.
     echo *** No habia nada que commitear, o hubo un error. ***

@@ -7,8 +7,8 @@ import { doc, getDoc, setDoc, updateDoc, increment } from "firebase/firestore";
 // ── Constantes ────────────────────────────────────────────────
 const PAYPAL_CLIENT_ID = "AZDxjDScFpQtjWTOUtWKbyN_bDt4OgqaF4eYXlewfBP4-8aqIgrkwP3K7T5UjFZIBnOoFGf7DNpJZO2";
 const PRECIO_MXN = 50;
-const PREGUNTAS_GRATIS = 1;
-const PREGUNTAS_BONUS = 5;
+const PREGUNTAS_GRATIS = 3;
+const PREGUNTAS_BONUS = 3;
 
 const CARDS = [
   { id:0,  name:"El Loco",              symbol:"🌬️", color:"#7ecac3", keywords:"nuevos comienzos, libertad, salto de fe" },
@@ -244,6 +244,9 @@ export default function App() {
   const [synthesis, setSynthesis] = useState("");
   const [loadingMsg, setLoadingMsg] = useState(LOADING_MSGS[0]);
 
+  // Guard contra dobles ejecuciones de handleReveal (clics rápidos, re-render de StrictMode, etc.)
+  const inFlightRef = useRef(false);
+
   // Procesar el resultado del redirect de Google al volver a la app
   useEffect(() => {
     getRedirectResult(auth).catch((e) => {
@@ -292,18 +295,20 @@ export default function App() {
   };
 
   const handleReveal = async () => {
+    // Guard: ignora clics duplicados o re-entradas mientras hay una lectura en curso.
+    // Toda la lectura completa (pregunta + 3 cartas + síntesis) cuenta como UNA sola consulta.
+    if (inFlightRef.current) return;
     if (!question.trim() || preguntasRestantes() <= 0) return;
+    inFlightRef.current = true;
+
     const shuffled = [...CARDS].sort(()=>Math.random()-.5).slice(0,3);
     setCards(shuffled); setCardReadings([]); setSynthesis(""); setRevealed(false);
     setStage("loading");
 
-    // Incrementar contador en Firestore (servidor — no hackeable)
-    await incrementarPregunta(user.uid);
-    setUserData(prev => ({ ...prev, preguntasUsadas: (prev?.preguntasUsadas||0)+1 }));
-
+    // 1) Esperamos la respuesta de la API ANTES de tocar el contador, así
+    //    el usuario ve siempre su lectura aunque algo raro pase con el conteo.
     let readings=[], synth="";
     try {
-      // Llamada al proxy de Vercel (sin CORS)
       const res = await fetch("/api/tarot", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
@@ -320,7 +325,13 @@ export default function App() {
       synth = `${user.displayName?.split(" ")[0] || "Querida"}, las cartas son claras: estás ante un momento de transformación real. Confía en tu guía interior.`;
     }
 
-    // Guardar historial
+    // 2) Lectura ya disponible: ahora SÍ contamos la consulta una única vez.
+    //    incrementarPregunta es fire-and-forget para no bloquear la animación.
+    const nuevoUsadas = (userData?.preguntasUsadas || 0) + 1;
+    incrementarPregunta(user.uid).catch(e => console.error("Error al guardar contador:", e));
+    setUserData(prev => ({ ...prev, preguntasUsadas: nuevoUsadas }));
+
+    // Guardar historial (fire-and-forget)
     fetch("/api/historial", {
       method:"POST",
       headers:{"Content-Type":"application/json"},
@@ -332,13 +343,18 @@ export default function App() {
         carta2: shuffled[1].name,
         carta3: shuffled[2].name,
         pago: userData?.pagos > 0,
-        preguntasUsadas: (userData?.preguntasUsadas||0)+1
+        preguntasUsadas: nuevoUsadas
       })
     }).catch(()=>{});
 
     setStage("reveal");
     setTimeout(()=>setRevealed(true), 300);
-    setTimeout(()=>{ setCardReadings(readings); setSynthesis(synth); setStage("result"); }, 3*380+1400);
+    setTimeout(()=>{
+      setCardReadings(readings);
+      setSynthesis(synth);
+      setStage("result");
+      inFlightRef.current = false; // libera el guard cuando ya está todo en pantalla
+    }, 3*380+1400);
   };
 
   const handleNewQuestion = () => {
@@ -411,7 +427,7 @@ export default function App() {
           ) : (
             <div style={{marginTop:"14px"}}>
               <div style={{display:"inline-block",padding:"6px 16px",background:`rgba(184,150,106,.08)`,border:`1px solid rgba(184,150,106,.2)`,borderRadius:"20px",fontSize:"12px",fontFamily:"serif",letterSpacing:"2px",color:gold}}>
-                ✦ 1 consulta gratuita
+                ✦ 3 consultas gratuitas
               </div>
             </div>
           )}
@@ -430,7 +446,7 @@ export default function App() {
                 <span style={{fontSize:"18px"}}>G</span>
                 <span>ENTRAR CON GOOGLE</span>
               </button>
-              <p style={{textAlign:"center",fontSize:"11px",color:`rgba(184,150,106,.3)`,marginTop:"14px",fontStyle:"italic"}}>Tu primera consulta es completamente gratuita</p>
+              <p style={{textAlign:"center",fontSize:"11px",color:`rgba(184,150,106,.3)`,marginTop:"14px",fontStyle:"italic"}}>Tus primeras 3 consultas son completamente gratuitas</p>
             </div>
           </div>
         )}
@@ -512,13 +528,13 @@ export default function App() {
               <div style={{fontSize:"40px",marginBottom:"16px",animation:"moon-float 5s ease-in-out infinite",display:"inline-block"}}>🔮</div>
               <h2 style={{fontFamily:"serif",fontSize:"clamp(16px,3.5vw,22px)",color:"#e8d4b0",marginBottom:"12px",letterSpacing:"2px"}}>Las cartas tienen más que decirte</h2>
               <p style={{fontSize:"clamp(13px,2vw,15px)",fontStyle:"italic",color:"rgba(232,212,176,.72)",lineHeight:1.9,marginBottom:"24px",maxWidth:"380px",margin:"0 auto 24px"}}>
-                {nombre}, tu consulta gratuita ha concluido. Desbloquea {PREGUNTAS_BONUS} lecturas más y deja que el oráculo te acompañe.
+                {nombre}, tus consultas gratuitas han concluido. Desbloquea {PREGUNTAS_BONUS} lecturas más y deja que el oráculo te acompañe.
               </p>
               <div style={{display:"inline-flex",flexDirection:"column",alignItems:"center",padding:"16px 28px",background:`rgba(184,150,106,.1)`,border:`1px solid rgba(184,150,106,.28)`,borderRadius:"16px",marginBottom:"22px"}}>
                 <div style={{fontFamily:"serif",fontSize:"10px",letterSpacing:"3px",color:`rgba(184,150,106,.55)`,marginBottom:"5px"}}>INVERSIÓN</div>
                 <div style={{fontFamily:"serif",fontSize:"36px",color:"#e8c870",lineHeight:1,fontWeight:"bold"}}>$50</div>
                 <div style={{fontSize:"11px",color:`rgba(184,150,106,.5)`,letterSpacing:"2px",marginTop:"3px"}}>MXN · {PREGUNTAS_BONUS} consultas</div>
-                <div style={{fontSize:"10px",color:`rgba(184,150,106,.35)`,marginTop:"4px",fontStyle:"italic"}}>≈ $10 MXN por lectura</div>
+                <div style={{fontSize:"10px",color:`rgba(184,150,106,.35)`,marginTop:"4px",fontStyle:"italic"}}>≈ $17 MXN por lectura</div>
               </div>
               <div style={{marginBottom:"16px"}}><PayPalButton onSuccess={handlePaySuccess}/></div>
               <div style={{display:"flex",justifyContent:"center",gap:"16px",fontSize:"11px",color:`rgba(184,150,106,.35)`,flexWrap:"wrap"}}>
