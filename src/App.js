@@ -1,7 +1,7 @@
 // src/App.js
 import { useState, useEffect, useRef } from "react";
 import { auth, db, googleProvider } from "./firebase/config";
-import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
+import { signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc, increment } from "firebase/firestore";
 
 // ── Constantes ────────────────────────────────────────────────
@@ -244,6 +244,14 @@ export default function App() {
   const [synthesis, setSynthesis] = useState("");
   const [loadingMsg, setLoadingMsg] = useState(LOADING_MSGS[0]);
 
+  // Procesar el resultado del redirect de Google al volver a la app
+  useEffect(() => {
+    getRedirectResult(auth).catch((e) => {
+      // Solo loggeamos: onAuthStateChanged ya maneja el estado del usuario
+      console.error("Error al volver del redirect de Google:", e);
+    });
+  }, []);
+
   // Auth listener
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
@@ -274,7 +282,7 @@ export default function App() {
   };
 
   const handleLogin = async () => {
-    try { await signInWithPopup(auth, googleProvider); }
+    try { await signInWithRedirect(auth, googleProvider); }
     catch (e) { console.error(e); }
   };
 
