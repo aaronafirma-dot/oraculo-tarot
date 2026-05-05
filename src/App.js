@@ -247,27 +247,42 @@ export default function App() {
   // Guard contra dobles ejecuciones de handleReveal (clics rápidos, re-render de StrictMode, etc.)
   const inFlightRef = useRef(false);
 
-  // Procesar el resultado del redirect de Google al volver a la app
+  // Auth: procesa el resultado del redirect Y se suscribe a los cambios de auth state.
+  // Importante: el setAuthLoading(false) está blindado con try/catch para que
+  // un fallo de Firestore (p.ej. reglas o DB no creada) no deje la UI atrapada
+  // en la pantalla de carga.
   useEffect(() => {
-    getRedirectResult(auth).catch((e) => {
-      // Solo loggeamos: onAuthStateChanged ya maneja el estado del usuario
-      console.error("Error al volver del redirect de Google:", e);
-    });
-  }, []);
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          console.log("Redirect login success:", result.user);
+        }
+      })
+      .catch((error) => {
+        console.error("Redirect error:", error);
+      });
 
-  // Auth listener
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
+    const unsubscribe = onAuthStateChanged(auth, async (u) => {
+      console.log("Auth state changed:", u);
       setUser(u);
       if (u) {
-        const data = await getUserData(u.uid);
-        setUserData(data);
+        try {
+          const data = await getUserData(u.uid);
+          setUserData(data);
+        } catch (e) {
+          // Firestore falló (DB no creada / reglas / 400). Dejamos un userData
+          // vacío para que la app siga mostrándose; las features que dependen
+          // de Firestore fallarán de forma controlada después.
+          console.error("getUserData failed (¿Firestore configurado?):", e);
+          setUserData({ preguntasUsadas: 0, preguntasPagadas: 0, pagos: 0 });
+        }
       } else {
         setUserData(null);
       }
       setAuthLoading(false);
     });
-    return unsub;
+
+    return () => unsubscribe();
   }, []);
 
   // Loading messages rotator

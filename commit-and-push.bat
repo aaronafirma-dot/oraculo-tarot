@@ -1,7 +1,7 @@
 @echo off
 REM ============================================================
 REM  Hace commit de los cambios pendientes y sube a GitHub.
-REM  Mensaje: instrumentacion completa para diagnosticar render.
+REM  Mensaje: combinar useEffect de auth + blindar contra fallo de Firestore.
 REM ============================================================
 
 cd /d "%~dp0"
@@ -16,7 +16,7 @@ git add -A
 
 echo.
 echo == Creando commit...
-git commit -m "debug: full instrumentation (fetch, setState, render, defensive check)"
+git commit -m "fix(auth): unify redirect/onAuthStateChanged effect; survive Firestore failures"
 if errorlevel 1 (
     echo.
     echo *** No habia nada que commitear, o hubo un error. ***
