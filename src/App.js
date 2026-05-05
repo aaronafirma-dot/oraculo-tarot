@@ -1,7 +1,7 @@
 // src/App.js
 import { useState, useEffect, useRef } from "react";
 import { auth, db, googleProvider } from "./firebase/config";
-import { signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "firebase/auth";
+import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc, increment } from "firebase/firestore";
 
 // ── Constantes ────────────────────────────────────────────────
@@ -247,23 +247,11 @@ export default function App() {
   // Guard contra dobles ejecuciones de handleReveal (clics rápidos, re-render de StrictMode, etc.)
   const inFlightRef = useRef(false);
 
-  // ── 1) AUTH: solo gestiona Firebase Auth (redirect + listener). ──
+  // ── 1) AUTH: solo gestiona Firebase Auth (listener). ──
+  // Con popup el resultado del login llega vía onAuthStateChanged cuando
+  // Firebase actualiza el estado tras cerrarse la ventana de Google.
   // No hace nada de Firestore aquí — eso vive en su propio efecto debajo.
   useEffect(() => {
-    // Procesar resultado del redirect al volver de Google
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result?.user) {
-          console.log("[AUTH] Redirect success:", result.user);
-        }
-      })
-      .catch((error) => {
-        console.error("[AUTH] Redirect error:", error);
-      });
-
-    // Escuchar cambios de auth state (incluye el resultado del redirect).
-    // Cerramos authLoading ANTES de tocar `user` para que la UI nunca muestre
-    // el login prematuramente mientras Firebase aún resuelve el redirect.
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       console.log("[AUTH] State changed:", u);
       setAuthLoading(false);
@@ -312,9 +300,9 @@ export default function App() {
   };
 
   const handleLogin = async () => {
-    console.log("[AUTH] Initiating signInWithRedirect...");
-    try { await signInWithRedirect(auth, googleProvider); }
-    catch (e) { console.error("[AUTH] signInWithRedirect error:", e); }
+    console.log("[AUTH] Initiating signInWithPopup...");
+    try { await signInWithPopup(auth, googleProvider); }
+    catch (e) { console.error("[AUTH] signInWithPopup error:", e); }
   };
 
   const handleLogout = async () => {
