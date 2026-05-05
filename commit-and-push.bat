@@ -1,7 +1,7 @@
 @echo off
 REM ============================================================
 REM  Hace commit de los cambios pendientes y sube a GitHub.
-REM  Mensaje: cambio de modelo a claude-haiku-4-5.
+REM  Mensaje: instrumentacion completa para diagnosticar render.
 REM ============================================================
 
 cd /d "%~dp0"
@@ -16,7 +16,7 @@ git add -A
 
 echo.
 echo == Creando commit...
-git commit -m "chore(api/tarot): switch model to claude-haiku-4-5-20251001"
+git commit -m "debug: full instrumentation (fetch, setState, render, defensive check)"
 if errorlevel 1 (
     echo.
     echo *** No habia nada que commitear, o hubo un error. ***

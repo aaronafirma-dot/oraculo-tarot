@@ -322,9 +322,15 @@ export default function App() {
         const errBody = await res.json().catch(() => ({}));
         throw new Error(errBody.error || `API ${res.status}`);
       }
-      const parsed = await res.json();
+      const data = await res.json();
+      // ── DIAGNÓSTICO TEMPORAL — paso 1: respuesta cruda ────
+      console.log("[DEBUG] RAW data:", data);
+      console.log("[DEBUG] interpretation:", data?.interpretation);
+      console.log("[DEBUG] cards:", data?.interpretation?.cards);
+      console.log("[DEBUG] synthesis:", data?.interpretation?.synthesis);
+      // ──────────────────────────────────────────────────────
       // El backend envuelve la lectura en { interpretation: { cards, synthesis } }
-      const interp = parsed.interpretation || {};
+      const interp = data.interpretation || {};
       readings = interp.cards || [];
       synth = interp.synthesis || "";
     } catch (err) {
@@ -359,6 +365,10 @@ export default function App() {
     setTimeout(()=>{
       setCardReadings(readings);
       setSynthesis(synth);
+      // ── DIAGNÓSTICO TEMPORAL — paso 2: setState ──────────
+      console.log("[DEBUG] SET cardReadings:", readings);
+      console.log("[DEBUG] SET synthesis:", synth);
+      // ─────────────────────────────────────────────────────
       setStage("result");
       inFlightRef.current = false; // libera el guard cuando ya está todo en pantalla
     }, 3*380+1400);
@@ -387,6 +397,15 @@ export default function App() {
     btn: (active) => ({ width:"100%", marginTop:"16px", padding:"17px", background:active?"linear-gradient(135deg,#3b1e0c,#8a5c28,#c9a55a,#8a5c28,#3b1e0c)":"rgba(255,255,255,.03)", border:`1px solid ${active?"rgba(184,150,106,.6)":"rgba(184,150,106,.1)"}`, borderRadius:"14px", color:active?"#fdf0d5":"rgba(184,150,106,.2)", fontFamily:"serif", fontSize:"12px", letterSpacing:"4px", fontWeight:"bold", cursor:active?"pointer":"not-allowed", transition:"all .4s" }),
     input: { width:"100%", background:"rgba(0,0,0,.32)", border:`1px solid rgba(184,150,106,.22)`, borderRadius:"14px", padding:"16px 18px", color:"#e8d4b0", fontSize:"16px", fontFamily:"Georgia,serif", boxSizing:"border-box", lineHeight:1.7, outline:"none" },
   };
+
+  // ── DIAGNÓSTICO TEMPORAL — paso 3: estado en cada render ──
+  console.log("[DEBUG] STATE cardReadings:", cardReadings);
+  console.log("[DEBUG] STATE synthesis:", synthesis);
+  // ── paso 4: verificación defensiva justo antes del render ─
+  if (stage === "result" && (!cardReadings || cardReadings.length === 0)) {
+    console.warn("[DEBUG] cardReadings vacío en render");
+  }
+  // ──────────────────────────────────────────────────────────
 
   if (authLoading) return (
     <div style={{...s.page, display:"flex", alignItems:"center", justifyContent:"center"}}>
