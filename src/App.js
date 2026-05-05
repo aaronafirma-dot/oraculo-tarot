@@ -318,10 +318,17 @@ export default function App() {
           userName: user.displayName?.split(" ")[0] || "querida"
         })
       });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error || `API ${res.status}`);
+      }
       const parsed = await res.json();
-      readings = parsed.cards || [];
-      synth = parsed.synthesis || "";
-    } catch {
+      // El backend envuelve la lectura en { interpretation: { cards, synthesis } }
+      const interp = parsed.interpretation || {};
+      readings = interp.cards || [];
+      synth = interp.synthesis || "";
+    } catch (err) {
+      console.error("Fallback de lectura, error:", err);
       synth = `${user.displayName?.split(" ")[0] || "Querida"}, las cartas son claras: estás ante un momento de transformación real. Confía en tu guía interior.`;
     }
 

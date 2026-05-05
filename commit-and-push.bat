@@ -1,7 +1,7 @@
 @echo off
 REM ============================================================
 REM  Hace commit de los cambios pendientes y sube a GitHub.
-REM  Mensaje: 3 consultas gratis, paquete de 3 pagas, fix conteo.
+REM  Mensaje: error handling robusto en api/tarot.js + nuevo shape.
 REM ============================================================
 
 cd /d "%~dp0"
@@ -16,7 +16,7 @@ git add -A
 
 echo.
 echo == Creando commit...
-git commit -m "feat(consultas): 3 gratis + paquete de 3 pagas; fix doble conteo por lectura"
+git commit -m "fix(api/tarot): claude-3-5-sonnet-latest, robust error handling, { interpretation } shape"
 if errorlevel 1 (
     echo.
     echo *** No habia nada que commitear, o hubo un error. ***

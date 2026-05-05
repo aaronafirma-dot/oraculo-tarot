@@ -1,0 +1,28 @@
+// Reglas de seguridad de Firestore para Oráculo Tarot
+// ─────────────────────────────────────────────────────────────
+// Cómo aplicar:
+//   1. Ve a https://console.firebase.google.com
+//   2. Selecciona el proyecto "tarot-app-3b0ed"
+//   3. Firestore Database → pestaña "Rules"
+//   4. Pega exactamente este contenido (sin esta línea de comentario)
+//   5. Click en "Publish"
+// ─────────────────────────────────────────────────────────────
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Cada usuario autenticado puede leer y escribir SOLO su propio
+    // documento en /usuarios/{uid}. Nadie puede ver datos de otros.
+    match /usuarios/{uid} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == uid;
+    }
+
+    // Bloquear cualquier otra colección por defecto
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

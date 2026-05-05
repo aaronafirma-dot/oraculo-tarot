@@ -17,10 +17,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Faltan datos" });
   }
 
-  try {
-    const POSITIONS = ["Lo que fue", "Lo que es", "Lo que será"];
+  const POSITIONS = ["Lo que fue", "Lo que es", "Lo que será"];
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+  // ── 1) Llamada a Anthropic ──────────────────────────────────
+  let apiRes;
+  try {
+    apiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -28,7 +30,7 @@ export default async function handler(req, res) {
         "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-3-5-sonnet-latest",
         max_tokens: 1000,
         system: `Eres una tarotista mexicana, profunda, cálida y directa. Hablas de tú a tú con calidez y autoridad espiritual. Tu lenguaje es poético pero claro, nunca genérico. NUNCA menciones que eres IA. Respondes ÚNICAMENTE con JSON válido, sin markdown ni texto fuera del JSON.`,
         messages: [{
@@ -52,14 +54,35 @@ Responde SOLO con este JSON:
         }]
       })
     });
-
-    const data = await response.json();
-    const raw = data.content?.find(b => b.type === "text")?.text || "{}";
-    const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
-    return res.status(200).json(parsed);
-
-  } catch (error) {
-    console.error("Error Anthropic:", error);
-    return res.status(500).json({ error: "Error al consultar las cartas" });
+  } catch (networkErr) {
+    console.error("Network error calling Anthropic:", networkErr);
+    return res.status(500).json({ error: "Network error reaching AI service" });
   }
+
+  // ── 2) Validar el status HTTP ───────────────────────────────
+  if (!apiRes.ok) {
+    const errorText = await apiRes.text();
+    console.error("Anthropic error:", errorText);
+    return res.status(500).json({ error: "AI request failed" });
+  }
+
+  // ── 3) Sacar el contenido textual del wrapper de Anthropic ──
+  const data = await apiRes.json();
+  const raw = data.content?.find(b => b.type === "text")?.text;
+  if (!raw) {
+    console.error("Anthropic returned empty content. Full payload:", JSON.stringify(data));
+    return res.status(500).json({ error: "AI returned empty content" });
+  }
+
+  // ── 4) Parsear el JSON interno en su propio try/catch ───────
+  let parsed;
+  try {
+    parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
+  } catch (parseErr) {
+    console.error("Failed to parse AI JSON. Raw content was:", raw);
+    return res.status(500).json({ error: "AI returned invalid JSON" });
+  }
+
+  // ── 5) Respuesta exitosa con el shape acordado ──────────────
+  return res.status(200).json({ interpretation: parsed });
 }
