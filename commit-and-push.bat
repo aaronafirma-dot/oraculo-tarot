@@ -1,7 +1,7 @@
 @echo off
 REM ============================================================
 REM  Hace commit de los cambios pendientes y sube a GitHub.
-REM  Mensaje: combinar useEffect de auth + blindar contra fallo de Firestore.
+REM  Mensaje: separar auth de Firestore; logs [AUTH] consistentes.
 REM ============================================================
 
 cd /d "%~dp0"
@@ -16,7 +16,7 @@ git add -A
 
 echo.
 echo == Creando commit...
-git commit -m "fix(auth): unify redirect/onAuthStateChanged effect; survive Firestore failures"
+git commit -m "fix(auth): isolate auth effect from Firestore; consistent [AUTH] logging"
 if errorlevel 1 (
     echo.
     echo *** No habia nada que commitear, o hubo un error. ***

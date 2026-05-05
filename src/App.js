@@ -247,43 +247,53 @@ export default function App() {
   // Guard contra dobles ejecuciones de handleReveal (clics rápidos, re-render de StrictMode, etc.)
   const inFlightRef = useRef(false);
 
-  // Auth: procesa el resultado del redirect Y se suscribe a los cambios de auth state.
-  // Importante: el setAuthLoading(false) está blindado con try/catch para que
-  // un fallo de Firestore (p.ej. reglas o DB no creada) no deje la UI atrapada
-  // en la pantalla de carga.
+  // ── 1) AUTH: solo gestiona Firebase Auth (redirect + listener). ──
+  // No hace nada de Firestore aquí — eso vive en su propio efecto debajo.
   useEffect(() => {
+    // Procesar resultado del redirect al volver de Google
     getRedirectResult(auth)
       .then((result) => {
         if (result?.user) {
-          console.log("Redirect login success:", result.user);
+          console.log("[AUTH] Redirect success:", result.user);
         }
       })
       .catch((error) => {
-        console.error("Redirect error:", error);
+        console.error("[AUTH] Redirect error:", error);
       });
 
-    const unsubscribe = onAuthStateChanged(auth, async (u) => {
-      console.log("Auth state changed:", u);
-      setUser(u);
+    // Escuchar cambios de auth state (incluye el resultado del redirect)
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      console.log("[AUTH] State changed:", u);
       if (u) {
-        try {
-          const data = await getUserData(u.uid);
-          setUserData(data);
-        } catch (e) {
-          // Firestore falló (DB no creada / reglas / 400). Dejamos un userData
-          // vacío para que la app siga mostrándose; las features que dependen
-          // de Firestore fallarán de forma controlada después.
-          console.error("getUserData failed (¿Firestore configurado?):", e);
-          setUserData({ preguntasUsadas: 0, preguntasPagadas: 0, pagos: 0 });
-        }
+        setUser(u);
       } else {
-        setUserData(null);
+        setUser(null);
       }
       setAuthLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
+
+  // ── 2) FIRESTORE: cada vez que cambia el user, carga su documento. ──
+  // Si Firestore falla, no bloquea la UI — usamos un userData por defecto.
+  useEffect(() => {
+    if (!user) {
+      setUserData(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await getUserData(user.uid);
+        if (!cancelled) setUserData(data);
+      } catch (e) {
+        console.error("[AUTH] getUserData failed (¿Firestore configurado?):", e);
+        if (!cancelled) setUserData({ preguntasUsadas: 0, preguntasPagadas: 0, pagos: 0 });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
 
   // Loading messages rotator
   useEffect(() => {
@@ -300,8 +310,9 @@ export default function App() {
   };
 
   const handleLogin = async () => {
+    console.log("[AUTH] Initiating signInWithRedirect...");
     try { await signInWithRedirect(auth, googleProvider); }
-    catch (e) { console.error(e); }
+    catch (e) { console.error("[AUTH] signInWithRedirect error:", e); }
   };
 
   const handleLogout = async () => {
