@@ -1,7 +1,7 @@
 @echo off
 REM ============================================================
 REM  Hace commit de los cambios pendientes y sube a GitHub.
-REM  Mensaje: separar auth de Firestore; logs [AUTH] consistentes.
+REM  Mensaje: setAuthLoading(false) antes de setUser para evitar flash de login.
 REM ============================================================
 
 cd /d "%~dp0"
@@ -16,7 +16,7 @@ git add -A
 
 echo.
 echo == Creando commit...
-git commit -m "fix(auth): isolate auth effect from Firestore; consistent [AUTH] logging"
+git commit -m "fix(auth): setAuthLoading(false) before setUser in onAuthStateChanged"
 if errorlevel 1 (
     echo.
     echo *** No habia nada que commitear, o hubo un error. ***

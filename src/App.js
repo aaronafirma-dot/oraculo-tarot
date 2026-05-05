@@ -261,15 +261,17 @@ export default function App() {
         console.error("[AUTH] Redirect error:", error);
       });
 
-    // Escuchar cambios de auth state (incluye el resultado del redirect)
+    // Escuchar cambios de auth state (incluye el resultado del redirect).
+    // Cerramos authLoading ANTES de tocar `user` para que la UI nunca muestre
+    // el login prematuramente mientras Firebase aún resuelve el redirect.
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       console.log("[AUTH] State changed:", u);
+      setAuthLoading(false);
       if (u) {
         setUser(u);
       } else {
         setUser(null);
       }
-      setAuthLoading(false);
     });
 
     return () => unsubscribe();
