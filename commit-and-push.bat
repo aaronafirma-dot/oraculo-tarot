@@ -1,7 +1,7 @@
 @echo off
 REM ============================================================
 REM  Hace commit de los cambios pendientes y sube a GitHub.
-REM  Mensaje: error handling robusto en api/tarot.js + nuevo shape.
+REM  Mensaje: cambio de modelo a claude-haiku-4-5.
 REM ============================================================
 
 cd /d "%~dp0"
@@ -16,7 +16,7 @@ git add -A
 
 echo.
 echo == Creando commit...
-git commit -m "fix(api/tarot): claude-3-5-sonnet-latest, robust error handling, { interpretation } shape"
+git commit -m "chore(api/tarot): switch model to claude-haiku-4-5-20251001"
 if errorlevel 1 (
     echo.
     echo *** No habia nada que commitear, o hubo un error. ***

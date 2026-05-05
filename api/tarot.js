@@ -30,7 +30,7 @@ export default async function handler(req, res) {
         "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        model: "claude-3-5-sonnet-latest",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1000,
         system: `Eres una tarotista mexicana, profunda, cálida y directa. Hablas de tú a tú con calidez y autoridad espiritual. Tu lenguaje es poético pero claro, nunca genérico. NUNCA menciones que eres IA. Respondes ÚNICAMENTE con JSON válido, sin markdown ni texto fuera del JSON.`,
         messages: [{
