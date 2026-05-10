@@ -5,7 +5,7 @@ import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc, increment } from "firebase/firestore";
 
 // ── Constantes ────────────────────────────────────────────────
-const PAYPAL_CLIENT_ID = "AZDxjDScFpQtjWTOUtWKbyN_bDt4OgqaF4eYXlewfBP4-8aqIgrkwP3K7T5UjFZIBnOoFGf7DNpJZO2";
+const PAYPAL_CLIENT_ID = "AalJEIzRoq9IvH1Nqawdi3sJk09PLxVDzR9VLtrzuzJrTUOHKuDVuJltMx5-RwvFOGRFXMWLabp7bbaT";
 const PRECIO_MXN = 50;
 const PREGUNTAS_GRATIS = 3;
 const PREGUNTAS_BONUS = 3;
