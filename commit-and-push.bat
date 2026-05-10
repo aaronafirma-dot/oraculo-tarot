@@ -1,7 +1,7 @@
 @echo off
 REM ============================================================
 REM  Hace commit y push de los cambios pendientes.
-REM  Mensaje: paywall persistente al regresar sin consultas.
+REM  Mensaje: deshabilitar PayPal tras el primer click con "Procesando...".
 REM ============================================================
 
 cd /d "%~dp0"
@@ -16,7 +16,7 @@ git add -A
 
 echo.
 echo == Creando commit...
-git commit -m "feat(paywall): show PayPal paywall whenever restantes<=0, not only on Nueva consulta"
+git commit -m "feat(paypal): disable button after first click; show 'Procesando...' until cancel/approve/error"
 if errorlevel 1 (
     echo.
     echo *** No habia nada que commitear, o hubo un error. ***

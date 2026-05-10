@@ -189,6 +189,7 @@ function PayPalButton({ onSuccess }) {
   const ref = useRef(null);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
+  const [processing, setProcessing] = useState(false);
   useEffect(() => {
     const ex = document.getElementById("pp-sdk");
     if (ex && window.paypal) { setLoaded(true); render(); return; }
@@ -205,13 +206,27 @@ function PayPalButton({ onSuccess }) {
     ref.current.innerHTML="";
     window.paypal.Buttons({
       style:{layout:"vertical",color:"gold",shape:"pill",label:"pay",height:46},
+      onClick:()=>{ setProcessing(true); },
       createOrder:(_,a)=>a.order.create({purchase_units:[{amount:{value:PRECIO_MXN.toString(),currency_code:"MXN"},description:`Oráculo del Tarot — ${PREGUNTAS_BONUS} lecturas`}]}),
       onApprove:async(_,a)=>{ await a.order.capture(); onSuccess(); },
-      onError:()=>setError(true),
+      onCancel:()=>{ setProcessing(false); },
+      onError:()=>{ setError(true); setProcessing(false); },
     }).render(ref.current);
   }, 200);
   if (error) return <p style={{color:"rgba(184,150,106,.6)",fontSize:"13px",textAlign:"center"}}>Error al cargar el pago. Recarga la página.</p>;
-  return <div>{!loaded && <p style={{color:"rgba(184,150,106,.5)",fontSize:"13px",textAlign:"center",fontStyle:"italic"}}>Cargando pago seguro...</p>}<div ref={ref}/></div>;
+  return (
+    <div>
+      {!loaded && !processing && (
+        <p style={{color:"rgba(184,150,106,.5)",fontSize:"13px",textAlign:"center",fontStyle:"italic"}}>Cargando pago seguro...</p>
+      )}
+      {/* El contenedor de PayPal se mantiene en el DOM (display:none) para no perder el render del SDK; */}
+      {/* si el usuario cancela el popup, volvemos a mostrarlo sin reinicializar nada. */}
+      <div ref={ref} style={{display: processing ? "none" : "block"}}/>
+      {processing && (
+        <p style={{color:"rgba(184,150,106,.85)",fontSize:"14px",textAlign:"center",fontStyle:"italic",padding:"14px",letterSpacing:"2px"}}>Procesando...</p>
+      )}
+    </div>
+  );
 }
 
 // ── Loading Screen ────────────────────────────────────────────
