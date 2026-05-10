@@ -494,7 +494,7 @@ export default function App() {
         )}
 
         {/* ── INPUT ── */}
-        {user && stage==="input" && (
+        {user && stage==="input" && (!userData || restantes>0) && (
           <div style={{animation:"fade-up .8s ease"}}>
             <div style={s.card}>
               <div style={{textAlign:"center",marginBottom:"22px",fontSize:"34px",animation:"moon-float 6s ease-in-out infinite",display:"inline-block",width:"100%"}}>🌙</div>
@@ -564,7 +564,7 @@ export default function App() {
         )}
 
         {/* ── PAYWALL ── */}
-        {user && stage==="paywall" && (
+        {user && userData && (stage==="paywall" || (stage==="input" && restantes<=0)) && (
           <div style={{animation:"fade-up .8s ease"}}>
             <div style={{...s.card, textAlign:"center", animation:"pulse 3s ease infinite"}}>
               <div style={{fontSize:"40px",marginBottom:"16px",animation:"moon-float 5s ease-in-out infinite",display:"inline-block"}}>🔮</div>

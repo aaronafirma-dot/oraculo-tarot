@@ -1,7 +1,7 @@
 @echo off
 REM ============================================================
 REM  Hace commit y push de los cambios pendientes.
-REM  Mensaje: actualizar PayPal Client ID a Live.
+REM  Mensaje: paywall persistente al regresar sin consultas.
 REM ============================================================
 
 cd /d "%~dp0"
@@ -16,7 +16,7 @@ git add -A
 
 echo.
 echo == Creando commit...
-git commit -m "chore(paypal): update Client ID to Live credentials"
+git commit -m "feat(paywall): show PayPal paywall whenever restantes<=0, not only on Nueva consulta"
 if errorlevel 1 (
     echo.
     echo *** No habia nada que commitear, o hubo un error. ***
