@@ -1,7 +1,7 @@
 @echo off
 REM ============================================================
 REM  Hace commit y push de los cambios pendientes.
-REM  Mensaje: deshabilitar PayPal tras el primer click con "Procesando...".
+REM  Mensaje: nuevo system prompt para lecturas mas humanas y contenidas.
 REM ============================================================
 
 cd /d "%~dp0"
@@ -16,7 +16,7 @@ git add -A
 
 echo.
 echo == Creando commit...
-git commit -m "feat(paypal): disable button after first click; show 'Procesando...' until cancel/approve/error"
+git commit -m "feat(api/tarot): rewrite system prompt for warm, hopeful, non-deterministic readings with sensitive-topic guardrails"
 if errorlevel 1 (
     echo.
     echo *** No habia nada que commitear, o hubo un error. ***
