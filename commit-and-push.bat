@@ -1,7 +1,7 @@
 @echo off
 REM ============================================================
 REM  Hace commit y push de los cambios pendientes.
-REM  Mensaje: nuevo system prompt para lecturas mas humanas y contenidas.
+REM  Mensaje: reforzar guardrails de desesperacion, enfermedad fisica, sensibilidad de palabra.
 REM ============================================================
 
 cd /d "%~dp0"
@@ -16,7 +16,7 @@ git add -A
 
 echo.
 echo == Creando commit...
-git commit -m "feat(api/tarot): rewrite system prompt for warm, hopeful, non-deterministic readings with sensitive-topic guardrails"
+git commit -m "feat(api/tarot): reinforce safety guardrails — desperation, physical illness, word sensitivity"
 if errorlevel 1 (
     echo.
     echo *** No habia nada que commitear, o hubo un error. ***
